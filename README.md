@@ -30,6 +30,9 @@ Real use case in [TidGi-Mobile's sync-adaptor](https://github.com/tiddly-gittly/
 
 ```ts
 /** workspaces.ts */
+import { ProxyPropertyType } from 'react-native-postmessage-cat';
+import type { ProxyDescriptor } from 'react-native-postmessage-cat/common';
+
 export class Workspace implements IWorkspaceService {
   /**
    * Record from workspace id to workspace settings
@@ -57,7 +60,7 @@ export interface IWorkspaceService {
   get$(id: string): Observable<IWorkspace | undefined>;
 }
 
-export const WorkspaceServiceIPCDescriptor = {
+export const WorkspaceServiceIPCDescriptor: ProxyDescriptor = {
   channel: WorkspaceChannel.name,
   properties: {
     workspaces$: ProxyPropertyType.Value$,
@@ -76,8 +79,8 @@ export const WorkspaceServiceIPCDescriptor = {
  * This file should be required by BrowserView's preload script to work
  */
 import { useMemo } from 'react';
-import webviewPreloadedJS from 'react-native-postmessage-cat/webview-string';
-import { useRegisterProxy } from 'react-native-postmessage-cat/react-native';
+import { ProxyPropertyType, useRegisterProxy, webviewPreloadedJS } from 'react-native-postmessage-cat';
+import type { ProxyDescriptor } from 'react-native-postmessage-cat/common';
 
 import { WorkspaceServiceIPCDescriptor } from '@services/workspaces/interface';
 
@@ -102,7 +105,7 @@ export const WikiViewer = () => {
 };
 ```
 
-### 4. receive in JS that runs inside WebView
+### 3. receive in JS that runs inside WebView
 
 ```ts
 /** renderer.tsx */

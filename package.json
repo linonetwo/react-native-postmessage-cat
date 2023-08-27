@@ -1,6 +1,6 @@
 {
   "name": "react-native-postmessage-cat",
-  "version": "0.0.1",
+  "version": "0.0.7",
   "description": "Passing object and type between React Native main process and WebView process simply via proxy.",
   "scripts": {
     "build": "tsc",
@@ -11,11 +11,12 @@
     "prepare": "npm-install-peers",
     "installType": "typesync"
   },
-  "main": "dist/webview-string.js",
+  "main": "dist/react-native.js",
   "type": "module",
   "exports": {
     "./react-native": "./dist/react-native.js",
     "./webview-string": "./dist/webview-string.js",
+    "./webview": "./dist/webview.js",
     "./common": "./dist/common.js",
     "./utils": "./dist/utils.js"
   },
@@ -24,8 +25,11 @@
       "react-native": [
         "./dist/react-native.d.ts"
       ],
-      "server": [
-        "./dist/server.d.ts"
+      "webview": [
+        "./dist/webview.d.ts"
+      ],
+      "webview-string": [
+        "./dist/webview-string.d.ts"
       ],
       "utils": [
         "./dist/utils.d.ts"

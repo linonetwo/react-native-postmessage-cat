@@ -35,13 +35,16 @@ const exampleLogger = Object.assign(console, {
 });
 
 export function useRegisterProxy<T>(target: T, descriptor: ProxyDescriptor, logger?: typeof exampleLogger) {
-  const webViewReference = useRef<WebView>(null);
+  const webViewReference = useRef<WebView | null>(null);
+  const onMessageReference = useRef<((event: WebViewMessageEvent) => void) | undefined>();
   useEffect(() => {
     if (webViewReference.current !== null) {
-      registerProxy(target, descriptor, webViewReference, logger);
+      const { onMessage, unregister } = registerProxy(target, descriptor, webViewReference, logger);
+      onMessageReference.current = onMessage;
+      return unregister;
     }
   }, [descriptor, logger, target]);
-  return [webViewReference];
+  return [webViewReference, onMessageReference] as const;
 }
 
 export function registerProxy<T>(target: T, descriptor: ProxyDescriptor, webViewReference: RefObject<WebView>, logger?: typeof exampleLogger): {
@@ -59,7 +62,7 @@ export function registerProxy<T>(target: T, descriptor: ProxyDescriptor, webView
 
   const onMessage = (event: WebViewMessageEvent): void => {
     const dataString = event.nativeEvent.data;
-    const { request, correlationId } = JSON.parse(dataString) as IWebViewPoseMessageCatData;
+    const { request, correlationId } = JSON.parse(dataString as string) as IWebViewPoseMessageCatData;
     server
       .handleRequest(request, channel)
       .then((result) => {
@@ -232,4 +235,5 @@ class ProxyServerHandler {
   }
 }
 
-export type { ProxyDescriptor, ProxyPropertyType } from './common';
+export { ProxyPropertyType } from './common.js';
+export { default as webviewPreloadedJS } from './webview-string.js';
