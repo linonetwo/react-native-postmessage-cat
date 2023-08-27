@@ -4,7 +4,8 @@ async function wrapInString() {
     const bundleContent = await fs.readFile('dist/webview-bundle.js', 'utf8');
 
     // Convert the content to a string and assign it to a variable
-    const escapedContent = bundleContent.replaceAll('`', '\\`').replaceAll('${', '\\${');;
+    // prevent [SyntaxError: 1:1967:non-terminated string]
+    const escapedContent = bundleContent.replaceAll('\\', '\\\\').replaceAll('`', '\\`').replaceAll('${', '\\${');;
     const wrappedContent = `const webviewPreloadedJS = \`${escapedContent}\`;\nexport default webviewPreloadedJS;`;    
 
     // Write the wrapped content to a new JS file

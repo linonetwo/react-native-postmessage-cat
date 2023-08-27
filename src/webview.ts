@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/promise-function-async */
 /**
  * This file runs in webView's preload script
  */
@@ -139,7 +140,7 @@ function getProperty(
       return makeObservable({ type: RequestType.Subscribe, propKey: propertyKey }, channel, ObservableCtor, transport);
     }
     case ProxyPropertyType.Function: {
-      return async (...arguments_: unknown[]) => await makeRequest({ type: RequestType.Apply, propKey: propertyKey, args: arguments_ }, channel, transport);
+      return (...arguments_: unknown[]) => makeRequest({ type: RequestType.Apply, propKey: propertyKey, args: arguments_ }, channel, transport);
     }
     case ProxyPropertyType.Function$: {
       return (...arguments_: any[]) => makeObservable({ type: RequestType.ApplySubscribe, propKey: propertyKey, args: arguments_ }, channel, ObservableCtor, transport);
@@ -151,11 +152,11 @@ function getProperty(
   }
 }
 
-async function makeRequest(request: Request, channel: string, transport: WebViewTransport): Promise<unknown> {
+function makeRequest(request: Request, channel: string, transport: WebViewTransport): Promise<unknown> {
   const correlationId = String(Math.random());
   transport.send(channel, request, correlationId);
 
-  return await new Promise((resolve, reject) => {
+  return new Promise((resolve, reject) => {
     transport.once(correlationId, (event: WebViewCatOnDataEvent) => {
       const response = event.detail.response;
       switch (response.type) {

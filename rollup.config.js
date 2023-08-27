@@ -10,7 +10,9 @@ export default {
     format: 'esm', // Output format as ES module
   },
   plugins: [
-    typescript(), // Compile TypeScript
+    typescript({
+      target: 'es5',
+    }), // Compile TypeScript
     resolve(), // Resolve imports from node_modules
     commonjs(), // Convert CommonJS to ES6 modules
     terser({ // Minify and remove comments

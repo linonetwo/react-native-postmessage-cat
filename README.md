@@ -118,24 +118,78 @@ import { WorkspaceServiceIPCDescriptor } from '@services/workspaces/interface';
 // `window.PostMessageCat`'s type is same as `createProxy` in `'react-native-postmessage-cat/webview'`
 const workspaceService = window.PostMessageCat<IWorkspace>(WorkspaceServiceIPCDescriptor)
 
-export function useWorkspacesListObservable(): IWorkspace[] | undefined {
-  const [workspaces, workspacesSetter] = useState<IWorkspace[] | undefined>();
-  // beware not pipe directly in the react hock, as it will re-pipe every time React reRenders, and every time regarded as new Observable, so it will re-subscribe
-  // useMemo will solve this
-  const workspacesList$ = useMemo(
-    () => workspaceService.workspaces$.pipe(map<Record<string, IWorkspace>, IWorkspace[]>((workspaces) => Object.values(workspaces))),
-    [],
-  );
-  useObservable<IWorkspace[] | undefined>(workspacesList$, workspacesSetter);
-  return workspaces;
-}
+const workspacesList$ = workspaceService.workspaces$.pipe(map<Record<string, IWorkspace>, IWorkspace[]>((workspaces) => Object.values(workspaces)));
+const workspace$ = workspaceService.get$(id)
+```
 
-export function useWorkspaceObservable(id: string): IWorkspace | undefined {
-  const [workspace, workspaceSetter] = useState<IWorkspace | undefined>();
-  const workspace$ = useMemo(() => workspaceService.get$(id), [id]);
-  useObservable<IWorkspace | undefined>(workspace$, workspaceSetter);
-  return workspace;
+### Another example
+
+```tsx
+import { useMemo } from 'react';
+import { ProxyPropertyType, useRegisterProxy, webviewPreloadedJS } from 'react-native-postmessage-cat';
+import type { ProxyDescriptor } from 'react-native-postmessage-cat/common';
+import { WebView } from 'react-native-webview';
+import { styled } from 'styled-components/native';
+import { useTiddlyWiki } from './useTiddlyWiki';
+
+const WebViewContainer = styled.View`
+  flex: 2;
+  height: 100%;
+`;
+
+class WikiStorage {
+  save(data: string) {
+    console.log('Saved', data);
+    return true;
+  }
 }
+enum WikiStorageChannel {
+  name = 'wiki-storage',
+}
+export const WikiStorageIPCDescriptor: ProxyDescriptor = {
+  channel: WikiStorageChannel.name,
+  properties: {
+    save: ProxyPropertyType.Function,
+  },
+};
+const wikiStorage = new WikiStorage();
+const tryWikiStorage = `
+const wikiStorage = window.PostMessageCat(${JSON.stringify(WikiStorageIPCDescriptor)});
+wikiStorage.save('Hello World').then(console.log);
+// play with it: window.wikiStorage.save('BBB').then(console.log)
+window.wikiStorage = wikiStorage;
+`;
+
+export const WikiViewer = () => {
+  const wikiHTMLString = useTiddlyWiki();
+  const [webViewReference, onMessageReference] = useRegisterProxy(wikiStorage, WikiStorageIPCDescriptor);
+  const preloadScript = useMemo(() => `
+    window.onerror = function(message, sourcefile, lineno, colno, error) {
+      if (error === null) return false;
+      alert("Message: " + message + " - Source: " + sourcefile + " Line: " + lineno + ":" + colno);
+      console.error(error);
+      return true;
+    };
+
+    ${webviewPreloadedJS}
+
+    ${tryWikiStorage}
+    
+    true; // note: this is required, or you'll sometimes get silent failures
+  `, []);
+  return (
+    <WebViewContainer>
+      <WebView
+        source={{ html: wikiHTMLString }}
+        onMessage={onMessageReference.current}
+        ref={webViewReference}
+        injectedJavaScriptBeforeContentLoaded={preloadScript}
+        // Open chrome://inspect/#devices to debug the WebView
+        webviewDebuggingEnabled
+      />
+    </WebViewContainer>
+  );
+};
 ```
 
 ## Notes

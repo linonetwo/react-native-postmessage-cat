@@ -1,3 +1,5 @@
+// not using async to prevent [SyntaxError: 2:10969:async functions are unsupported] in react-native-webview
+/* eslint-disable @typescript-eslint/promise-function-async */
 /* eslint-disable @typescript-eslint/strict-boolean-expressions */
 /* eslint-disable @typescript-eslint/require-await */
 /* eslint-disable @typescript-eslint/no-unsafe-return */
@@ -76,7 +78,10 @@ export function registerProxy<T>(target: T, descriptor: ProxyDescriptor, webView
           stringifiedRequest = request.type;
         }
         logger?.error?.(`E-0 IPC Error on ${channel} ${stringifiedRequest} ${(error as Error).message} ${(error as Error).stack ?? ''}`);
-        server.sendDataToWebView(correlationId, channel, { type: ResponseType.Error, error: JSON.stringify(serializeError(error, { maxDepth: 1 })) });
+        server.sendDataToWebView(correlationId, channel, {
+          type: ResponseType.Error,
+          error: JSON.stringify(serializeError(error, { maxDepth: 1 })),
+        });
       });
   };
 
@@ -104,25 +109,25 @@ class ProxyServerHandler {
 
   private subscriptions: Record<string, Subscription | undefined> = {};
 
-  public async handleRequest(request: Request, channel: string): Promise<any> {
+  public handleRequest(request: Request, channel: string): Promise<any> {
     switch (request.type) {
       case RequestType.Get: {
-        return await this.handleGet(request);
+        return Promise.resolve(this.handleGet(request));
       }
       case RequestType.Apply: {
-        return this.handleApply(request);
+        return Promise.resolve(this.handleApply(request));
       }
       case RequestType.Subscribe: {
         this.handleSubscribe(request, channel);
-        return;
+        return Promise.resolve();
       }
       case RequestType.ApplySubscribe: {
         this.handleApplySubscribe(request, channel);
-        return;
+        return Promise.resolve();
       }
       case RequestType.Unsubscribe: {
         this.handleUnsubscribe(request);
-        return;
+        return Promise.resolve();
       }
       default: {
         throw new IpcProxyError(`Unhandled RequestType [${request.type}]`);
@@ -138,7 +143,7 @@ class ProxyServerHandler {
   public sendDataToWebView(correlationId: string, channel: string, data: unknown) {
     const stringifiedData = JSON.stringify(data);
     const jsCode = `
-      if (window["${webViewCallbackKey}"]?.trigger !== undefined]) {
+      if (window["${webViewCallbackKey}"]?.trigger !== undefined) {
         window["${webViewCallbackKey}"].trigger("${correlationId}", "${channel}", ${stringifiedData});
       }
       true;
@@ -146,7 +151,7 @@ class ProxyServerHandler {
     this.webViewReference.current?.injectJavaScript(jsCode);
   }
 
-  private async handleGet(request: GetRequest): Promise<any> {
+  private handleGet(request: GetRequest): Promise<any> {
     return this.target[request.propKey];
   }
 
