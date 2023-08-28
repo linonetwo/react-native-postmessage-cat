@@ -45,8 +45,12 @@
   },
   "keywords": [
     "react-native",
+    "react-native-webview",
+    "react-native-webview-bridge",
     "post-message",
     "proxy",
+    "invoke",
+    "bridge",
     "WebView",
     "postMessage"
   ],
