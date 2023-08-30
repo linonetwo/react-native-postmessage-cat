@@ -96,7 +96,7 @@ export const WikiViewer = () => {
     <WebViewContainer>
       <WebView
         source={{ html: wikiHTMLString }}
-        onMessage={onMessage}
+        onMessage={onMessage ?? () => {}}
         ref={webViewReference}
         injectedJavaScriptBeforeContentLoaded={runFirst}
       />
@@ -181,7 +181,9 @@ export const WikiViewer = () => {
     <WebViewContainer>
       <WebView
         source={{ html: wikiHTMLString }}
-        onMessage={onMessageReference.current}
+        onMessage={onMessageReference.current ?? ((message) => {
+          console.log('WebView onMessage (before onMessageReference.current ready)', message);
+        })}
         ref={webViewReference}
         injectedJavaScriptBeforeContentLoaded={preloadScript}
         // Open chrome://inspect/#devices to debug the WebView
@@ -211,6 +213,10 @@ The packages exposes 2 entry points in the "main" and "browser" fields of packag
 [Example in TiddlyGit](https://github.com/tiddly-gittly/TiddlyGit-Desktop/blob/0c6b26c0c1113e0c66d6f49f022c5733d4fa85e8/src/preload/common/services.ts#L27-L42)
 
 ## FAQ
+
+### ReactNativeWebView isn't available. Can't post the message in react-native-postmessage-cat's WebViewTransport.
+
+[See issue 1829](https://github.com/react-native-webview/react-native-webview/issues/1829#issuecomment-1699235643), [You must set onMessage or the window.ReactNativeWebView.postMessage method will not be injected into the web page.](https://github.com/react-native-webview/react-native-webview/blob/master/docs/Guide.md#the-windowreactnativewebviewpostmessage-method-and-onmessage-prop).
 
 ### reject string
 
