@@ -87,7 +87,7 @@ import { WorkspaceServiceIPCDescriptor } from '@services/workspaces/interface';
 const workspaceService = new WorkspaceService();
 
 export const WikiViewer = () => {
-  const [webViewReference] = useRegisterProxy(workspaceService, WorkspaceServiceIPCDescriptor)
+  const [webViewReference, onMessageReference] = useRegisterProxy(workspaceService, WorkspaceServiceIPCDescriptor)
   const preloadScript = useMemo(() =>`
     ${webviewPreloadedJS}
     true; // note: this is required, or you'll sometimes get silent failures
@@ -96,7 +96,7 @@ export const WikiViewer = () => {
     <WebViewContainer>
       <WebView
         source={{ html: wikiHTMLString }}
-        onMessage={onMessage ?? () => {}}
+        onMessage={onMessageReference.current}
         ref={webViewReference}
         injectedJavaScriptBeforeContentLoaded={runFirst}
       />
@@ -181,9 +181,7 @@ export const WikiViewer = () => {
     <WebViewContainer>
       <WebView
         source={{ html: wikiHTMLString }}
-        onMessage={onMessageReference.current ?? ((message) => {
-          console.log('WebView onMessage (before onMessageReference.current ready)', message);
-        })}
+        onMessage={onMessageReference.current}
         ref={webViewReference}
         injectedJavaScriptBeforeContentLoaded={preloadScript}
         // Open chrome://inspect/#devices to debug the WebView
@@ -214,9 +212,11 @@ The packages exposes 2 entry points in the "main" and "browser" fields of packag
 
 ## FAQ
 
-### ReactNativeWebView isn't available. Can't post the message in react-native-postmessage-cat's WebViewTransport.
+### WebView onMessage (before onMessageReference.current ready)
 
 [See issue 1829](https://github.com/react-native-webview/react-native-webview/issues/1829#issuecomment-1699235643), [You must set onMessage or the window.ReactNativeWebView.postMessage method will not be injected into the web page.](https://github.com/react-native-webview/react-native-webview/blob/master/docs/Guide.md#the-windowreactnativewebviewpostmessage-method-and-onmessage-prop).
+
+So a default callback is provided, and will log this, this can be safely ignored.
 
 ### reject string
 

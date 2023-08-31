@@ -38,7 +38,12 @@ const exampleLogger = Object.assign(console, {
 
 export function useRegisterProxy<T>(target: T, descriptor: ProxyDescriptor, logger?: typeof exampleLogger) {
   const webViewReference = useRef<WebView | null>(null);
-  const onMessageReference = useRef<((event: WebViewMessageEvent) => void) | undefined>();
+  /**
+   * [See issue 1829](https://github.com/react-native-webview/react-native-webview/issues/1829#issuecomment-1699235643), fixed by [You must set onMessage or the window.ReactNativeWebView.postMessage method will not be injected into the web page.](https://github.com/react-native-webview/react-native-webview/blob/master/docs/Guide.md#the-windowreactnativewebviewpostmessage-method-and-onmessage-prop).
+   */
+  const onMessageReference = useRef<((event: WebViewMessageEvent) => void)>((event) => {
+    console.log('WebView onMessage (before onMessageReference.current ready)', event);
+  });
   useEffect(() => {
     if (webViewReference.current !== null) {
       const { onMessage, unregister } = registerProxy(target, descriptor, webViewReference, logger);
