@@ -6,7 +6,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-call */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
-import { RefObject, useEffect, useRef } from 'react';
+import { RefObject, useCallback, useEffect, useRef } from 'react';
 import WebView, { WebViewMessageEvent } from 'react-native-webview';
 import { isObservable, Observable, Subscription } from 'rxjs';
 import { serializeError } from 'serialize-error';
@@ -36,21 +36,27 @@ const exampleLogger = Object.assign(console, {
   debug: console.log.bind(console),
 });
 
-export function useRegisterProxy<T>(target: T, descriptor: ProxyDescriptor, logger?: typeof exampleLogger) {
+export function useRegisterProxy<T>(target: T, descriptor: ProxyDescriptor, logger?: { debugLog?: boolean; logger?: typeof exampleLogger }) {
   const webViewReference = useRef<WebView | null>(null);
+  const debugLog = useCallback((...parameters: unknown[]) => {
+    if (logger?.debugLog) (logger.logger ?? exampleLogger).debug(...parameters);
+  }, [logger?.debugLog, logger?.logger]);
   /**
    * [See issue 1829](https://github.com/react-native-webview/react-native-webview/issues/1829#issuecomment-1699235643), fixed by [You must set onMessage or the window.ReactNativeWebView.postMessage method will not be injected into the web page.](https://github.com/react-native-webview/react-native-webview/blob/master/docs/Guide.md#the-windowreactnativewebviewpostmessage-method-and-onmessage-prop).
    */
   const onMessageReference = useRef<((event: WebViewMessageEvent) => void)>((event) => {
-    console.log('WebView onMessage (before onMessageReference.current ready)', event);
+    debugLog('WebView onMessage (before onMessageReference.current ready)', event);
   });
   useEffect(() => {
-    if (webViewReference.current !== null) {
-      const { onMessage, unregister } = registerProxy(target, descriptor, webViewReference, logger);
+    if (webViewReference.current === null) {
+      debugLog('webViewReference.current is still null');
+    } else {
+      const { onMessage, unregister } = registerProxy(target, descriptor, webViewReference, logger?.logger);
+      debugLog('setting onMessage to onMessageReference.current');
       onMessageReference.current = onMessage;
       return unregister;
     }
-  }, [descriptor, logger, target]);
+  }, [debugLog, descriptor, logger?.logger, target]);
   return [webViewReference, onMessageReference] as const;
 }
 

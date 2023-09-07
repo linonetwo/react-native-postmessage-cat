@@ -1,6 +1,6 @@
 {
   "name": "react-native-postmessage-cat",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Passing object and type between React Native main process and WebView process simply via proxy.",
   "scripts": {
     "build": "tsc",

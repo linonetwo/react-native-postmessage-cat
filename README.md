@@ -218,6 +218,10 @@ The packages exposes 2 entry points in the "main" and "browser" fields of packag
 
 So a default callback is provided, and will log this, this can be safely ignored.
 
+### Unable to resolve "react-native-postmessage-cat/react-native" from xxx
+
+Use `import { useRegisterProxy } from 'react-native-postmessage-cat';` instead of `"react-native-postmessage-cat/react-native"`.
+
 ### reject string
 
 You should reject an Error, other wise `serialize-error` can't handle it well.
