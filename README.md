@@ -192,6 +192,94 @@ export const WikiViewer = () => {
 };
 ```
 
+### Multiple references
+
+```ts
+import { useMergedReference } from 'react-native-postmessage-cat';
+import { IWikiWorkspace } from '../store/wiki';
+import { AppDataServiceIPCDescriptor } from './AppDataService/descriptor';
+import { useAppDataService } from './AppDataService/hooks';
+import { BackgroundSyncServiceIPCDescriptor } from './BackgroundSyncService/descriptor';
+import { useBackgroundSyncService } from './BackgroundSyncService/hooks';
+import { NativeServiceIPCDescriptor } from './NativeService/descriptor';
+import { useNativeService } from './NativeService/hooks';
+import { WikiStorageServiceIPCDescriptor } from './WikiStorageService/descriptor';
+import { useWikiStorageService } from './WikiStorageService/hooks';
+
+const registerServiceOnWebView = `
+window.service = window.service || {};
+var wikiStorageService = window.PostMessageCat(${JSON.stringify(WikiStorageServiceIPCDescriptor)});
+window.service.wikiStorageService = wikiStorageService;
+var backgroundSyncService = window.PostMessageCat(${JSON.stringify(BackgroundSyncServiceIPCDescriptor)});
+window.service.backgroundSyncService = backgroundSyncService;
+var nativeService = window.PostMessageCat(${JSON.stringify(NativeServiceIPCDescriptor)});
+window.service.nativeService = nativeService;
+var appDataService = window.PostMessageCat(${JSON.stringify(AppDataServiceIPCDescriptor)});
+window.service.appDataService = appDataService;
+`;
+
+export function useRegisterService(workspace: IWikiWorkspace) {
+  const [wikiStorageServiceWebViewReference, wikiStorageServiceOnMessageReference] = useWikiStorageService(workspace);
+  const [backgroundSyncServiceWebViewReference, backgroundSyncServiceOnMessageReference] = useBackgroundSyncService();
+  const [nativeServiceWebViewReference, nativeServiceOnMessageReference] = useNativeService();
+  const [appDataServiceWebViewReference, appDataServiceOnMessageReference] = useAppDataService();
+
+  const mergedWebViewReference = useMergedReference(
+    wikiStorageServiceWebViewReference,
+    backgroundSyncServiceWebViewReference,
+    nativeServiceWebViewReference,
+    appDataServiceWebViewReference,
+  );
+
+  const mergedOnMessageReference = useMergedReference(
+    wikiStorageServiceOnMessageReference,
+    backgroundSyncServiceOnMessageReference,
+    nativeServiceOnMessageReference,
+    appDataServiceOnMessageReference,
+  );
+
+  return [mergedWebViewReference, mergedOnMessageReference, registerServiceOnWebView] as const;
+}
+```
+
+Where `./WikiStorageService/hooks` is
+
+```ts
+import { useMemo } from 'react';
+import { useRegisterProxy } from 'react-native-postmessage-cat';
+import { IWikiWorkspace } from '../../store/wiki';
+import { WikiStorageService } from '.';
+import { WikiStorageServiceIPCDescriptor } from './descriptor';
+
+export function useWikiStorageService(workspace: IWikiWorkspace) {
+  const wikiStorageService = useMemo(() => new WikiStorageService(workspace), [workspace]);
+  const [webViewReference, onMessageReference] = useRegisterProxy(wikiStorageService, WikiStorageServiceIPCDescriptor, { debugLog: true });
+  return [webViewReference, onMessageReference] as const;
+}
+```
+
+Use it in React Component
+
+```tsx
+  const [webViewReference, onMessageReference, registerWikiStorageServiceOnWebView] = useRegisterService(wikiWorkspace);
+  const preloadScript = useMemo(() => `
+    ${webviewSideReceiver}
+    true; // note: this is required, or you'll sometimes get silent failures
+  `, [webviewSideReceiver]);
+
+  return (
+    <WebView
+      originWhitelist={['*']}
+      // add DOCTYPE at load time to prevent Quirks Mode
+      source={{ html: `<!doctype html><html lang="en"><head><meta charset="UTF-8" /></head><body></body></html>` }}
+      onMessage={onMessageReference.current}
+      ref={webViewReference}
+      injectedJavaScriptBeforeContentLoaded={preloadScript}
+      webviewDebuggingEnabled={true /* Open chrome://inspect/#devices to debug the WebView */}
+    />
+  );
+```
+
 ## Notes
 
 All `Values` and `Functions` will return promises on the renderer side, no matter how they have been defined on the source object. This is because communication happens asynchronously. For this reason it is recommended that you make them promises on the source object as well, so the interface is the same on both sides.

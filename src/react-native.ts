@@ -25,7 +25,7 @@ import {
 import { IpcProxyError, isFunction, webViewCallbackKey } from './utils.js';
 
 // TODO: make it to be able to use @decorator, instead of write a description json. We can defer the setup of ipc handler to make this possible.
-const registrations: Record<string, ProxyServerHandler | null> = {};
+export const registrations: Record<string, ProxyServerHandler | null> = {};
 
 const exampleLogger = Object.assign(console, {
   emerg: console.error.bind(console),
@@ -75,7 +75,8 @@ export function registerProxy<T>(target: T, descriptor: ProxyDescriptor, webView
 
   const onMessage = (event: WebViewMessageEvent): void => {
     const dataString = event.nativeEvent.data;
-    const { request, correlationId } = JSON.parse(dataString as string) as IWebViewPoseMessageCatData;
+    const { request, correlationId, channel: callerChannel } = JSON.parse(dataString as string) as IWebViewPoseMessageCatData;
+    if (callerChannel !== channel) return;
     server
       .handleRequest(request, channel)
       .then((result) => {
@@ -252,4 +253,5 @@ class ProxyServerHandler {
 }
 
 export { ProxyPropertyType } from './common.js';
+export { useMergedReference } from './useMergedReference.js';
 export { default as webviewPreloadedJS } from './webview-string.js';
