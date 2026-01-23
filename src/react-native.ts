@@ -1,7 +1,5 @@
 // not using async to prevent [SyntaxError: 2:10969:async functions are unsupported] in react-native-webview
-/* eslint-disable @typescript-eslint/promise-function-async */
-/* eslint-disable @typescript-eslint/strict-boolean-expressions */
-/* eslint-disable @typescript-eslint/require-await */
+
 /* eslint-disable @typescript-eslint/no-unsafe-return */
 /* eslint-disable @typescript-eslint/no-unsafe-call */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
@@ -75,7 +73,7 @@ export function registerProxy<T>(target: T, descriptor: ProxyDescriptor, webView
 
   const onMessage = (event: WebViewMessageEvent): void => {
     const dataString = event.nativeEvent.data;
-    const { request, correlationId, channel: callerChannel } = JSON.parse(dataString as string) as IWebViewPoseMessageCatData;
+    const { request, correlationId, channel: callerChannel } = JSON.parse(dataString) as IWebViewPoseMessageCatData;
     if (callerChannel !== channel) return;
     server
       .handleRequest(request, channel)

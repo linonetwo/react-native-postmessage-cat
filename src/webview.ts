@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/promise-function-async */
 /**
  * This file runs in webView's preload script
  */
@@ -94,7 +93,7 @@ function createProxy<T>(descriptor: ProxyDescriptor, ObservableCtor: ObservableC
     if (propertyType === ProxyPropertyType.Value$) {
       Object.defineProperty(result, getSubscriptionKey(propertyKey), {
         enumerable: true,
-        get: memoize(() => (observerOrNext?: Partial<Observer<unknown>> | ((value: unknown) => void) | undefined) => {
+        get: memoize(() => (observerOrNext?: Partial<Observer<unknown>> | ((value: unknown) => void)) => {
           const ipcProxyObservable = getProperty(propertyType, propertyKey, descriptor.channel, ObservableCtor, transport);
           if (isObservable(ipcProxyObservable)) {
             ipcProxyObservable.subscribe(observerOrNext);
@@ -104,7 +103,7 @@ function createProxy<T>(descriptor: ProxyDescriptor, ObservableCtor: ObservableC
     } else if (propertyType === ProxyPropertyType.Function$) {
       Object.defineProperty(result, getSubscriptionKey(propertyKey), {
         enumerable: true,
-        get: memoize(() => (...arguments_: unknown[]) => (observerOrNext?: Partial<Observer<unknown>> | ((value: unknown) => void) | undefined) => {
+        get: memoize(() => (...arguments_: unknown[]) => (observerOrNext?: Partial<Observer<unknown>> | ((value: unknown) => void)) => {
           const ipcProxyObservableFunction = getProperty(propertyType, propertyKey, descriptor.channel, ObservableCtor, transport);
           if (typeof ipcProxyObservableFunction === 'function') {
             const ipcProxyObservable = ipcProxyObservableFunction(...arguments_);

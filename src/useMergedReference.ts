@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/strict-boolean-expressions */
 /* eslint-disable unicorn/prevent-abbreviations */
 import { type MutableRefObject, useRef } from 'react';
 import type { NativeSyntheticEvent } from 'react-native';
