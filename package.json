@@ -1,19 +1,22 @@
 {
   "name": "react-native-postmessage-cat",
-  "version": "0.3.1",
+  "version": "0.3.3",
   "description": "Passing object and type between React Native main process and WebView process simply via proxy.",
   "scripts": {
     "build": "tsc",
     "bundle:webview": "rollup -c && zx scripts/wrapBundleInString.mjs",
     "test": "echo \"Error: no test specified\" && exit 1",
     "prepublishOnly": "npm run clean && npm run build && npm run bundle:webview",
-    "clean": "rm -rf ./dist",
-    "prepare": "npm-install-peers",
+    "clean": "rimraf ./dist",
+    "lint": "eslint ./src --ext js,ts,tsx,json",
+    "lint:fix": "eslint ./src --ext ts,tsx,json --fix",
+    "check": "tsc --noEmit --skipLibCheck",
     "installType": "typesync"
   },
   "main": "dist/react-native.js",
   "type": "module",
   "exports": {
+    ".": "./dist/react-native.js",
     "./react-native": "./dist/react-native.js",
     "./webview-string": "./dist/webview-string.js",
     "./webview": "./dist/webview.js",
@@ -64,10 +67,9 @@
   ],
   "homepage": "https://github.com/linonetwo/react-native-postmessage-cat#readme",
   "dependencies": {
-    "memize": "^2.1.0",
-    "react": "^18.2.0",
-    "serialize-error": "^11.0.2",
-    "type-fest": "^4.3.0"
+    "memize": "^2.1.1",
+    "serialize-error": "^13.0.1",
+    "type-fest": "^5.4.1"
   },
   "devDependencies": {
     "@rollup/plugin-commonjs": "^25.0.4",
@@ -75,18 +77,20 @@
     "@types/lodash": "^4.14.197",
     "@types/react": "^18.2.21",
     "dprint": "^0.40.2",
-    "eslint-config-tidgi": "^1.1.4",
+    "eslint-config-tidgi": "^2.2.0",
     "npm-install-peers": "^1.2.2",
     "react-native": "0.72.4",
+    "rimraf": "^6.1.2",
     "rollup": "^3.28.1",
     "rollup-plugin-terser": "^7.0.2",
     "rollup-plugin-typescript2": "^0.35.0",
-    "rxjs": "^7.8.1",
-    "typescript": "^5.2.2",
+    "rxjs": "^7.8.2",
+    "typescript": "^5.9.3",
     "typesync": "^0.11.1",
     "zx": "^7.2.3"
   },
   "peerDependencies": {
+    "react": "^19.0.0",
     "react-native-webview": ">= 13.0.0",
     "rxjs": ">= 7.5.0"
   }
